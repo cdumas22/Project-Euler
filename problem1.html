@@ -1,0 +1,112 @@
+<html>
+<head>
+	<style>
+		span {
+			padding:4px;
+			border:solid 1px black;
+			margin:2px;
+			max-width:270px;
+			text-align:center;
+			min-width:36px;
+			display:inline-block;
+		}
+		.three{
+			background:lightgrey;
+		}
+		.five{
+			background:lavender;
+		}
+		.both{
+			background:khaki;
+		}
+		#results span:last-child {
+			color:red;
+			font-weight:bold;
+			font-size:4em;
+			clear:both;
+			width:95%;
+			background:greenyellow;
+			max-width:none;
+		}
+	</style>
+	<script src="common.js"></script>
+</head>
+<body>
+	<div>
+		<h1> EXERCISE 1 : Sum of all whole numbers that are multiples of 3 or 5 below 1000</h1>
+		<span class="three">multiple of 3</span>
+		<span class="five">multiple of 5</span>
+		<span class="both">multiple of 3 and 5</span>
+		<hr/>
+		<div>
+			Sum Numbers to<input type="textbox" id="numbers"/>
+			<input type="button" onclick="runSum('multiples')" value="run"/>
+		</div>
+	</div>
+	<div>
+		<h2>numbers</h2>
+		<div id="values"></div>
+		<div id="results"></div>
+	</div>
+	<script>
+		//use self exexuting functions for cleanness
+		var ran = false,
+			runSum = function(type){
+				ran = true
+				var total = 0, i, 
+				sumto = document.getElementById("numbers").value,				
+				/**
+					Magic that finds the numbers
+				*/
+				sumWholeNumbers = function(to) {
+					var blob = new Blob([document.querySelector('#sum35').innerHTML], {"type": "text/javascript"}),
+						url = window.webkitURL.createObjectURL(blob),
+						worker = new Worker(url);
+
+					worker.postMessage({'num': to});
+					worker.onmessage = function(event){
+						var a = document.createElement("div");
+						a.innerHTML = event.data.doc;
+						document.getElementById("values").innerHTML = "";
+						document.getElementById("values").appendChild(a);
+						Euler.print({num:event.data.total, last:true});
+					};
+				};
+				//END MAGIC
+			if(ran === true){
+				document.getElementById("results").innerHTML = "";
+			}
+			sumWholeNumbers(sumto);
+		};
+	</script>
+	<script id="sum35" type="javascript/worker">
+		self.onmessage = function(event){
+			var i, doc = "", total = 0;
+			for (i = 0; i < event.data.num; i = i + 1){
+				if((i % 3) === 0 || (i % 5) === 0){
+					doc  = doc + printNum(i);
+					total = total + i;
+				}				
+			}
+			this.postMessage({"doc":doc, "total":total});
+		}
+		var printNum = function(num, last){
+			var c = "";
+			if((num % 3) === 0 && (num % 5) === 0) c = "both";
+			else if((num % 3) === 0) c = "three";
+			else c = "five";
+
+			var a = "<span class='" + c + "'>" + addComma(num) + "</span>";
+			return a;
+		};
+		var addComma = function(num) {
+			var rgx = /(\d+)(\d{3})/;//regex for three numbers
+			num = num + '';//convert the number to a string
+			while (rgx.test(num)) {
+				num = num.replace(rgx, '$1' + ',' + '$2');
+			}
+			return num;
+		};
+	</script>
+</body>	
+</html>

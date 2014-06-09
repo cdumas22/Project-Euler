@@ -1,0 +1,92 @@
+<html>
+<head>
+	<script src="common.js"></script>
+</head>
+<body>
+	<div style="">
+		<h1> EXERCISE 32 : Find the sum of all products whose multiplicand/multiplier/product identity can be written as a 1 through 9 pandigital.</h1>
+		<hr/>
+		<div style="display:block;max-width:500px;">
+			Start Number (0-9)<input type="textbox" id="start"/></br>
+			End Number (0-9)<input type="textbox" id="end"/></br>
+			<input type="button" onclick="pandigital()" value="run"/>
+		</div>
+	</div>
+	<div style="">
+		<h2>numbers</h2>
+		<div id="loading" style="display:none">Finding Largest Prime Factor</div>
+		<div id="results" style="max-width:none;"></div>
+		<script>
+			var pandigital = function(options) {
+				var pandigital = new Blob([document.querySelector('#pandigital').innerHTML], {"type": "text/javascript"}),
+				pandigitalURL = window.webkitURL.createObjectURL(pandigital),
+				pandigitalThread = new Worker(pandigitalURL);
+				
+				var start = parseInt(document.getElementById("start").value);
+				var end = parseInt(document.getElementById("end").value);
+				
+				var s = (new Date()).valueOf(), e;
+				document.getElementById("loading").style.display = "block";
+				document.getElementById("results").innerHTML = "";
+				
+				pandigitalThread.postMessage({"start": start, "end": end});
+				pandigitalThread.onmessage = function(event){
+					var combos = "";
+					for(var i = 0; i < event.data.combos.length; i++){
+						combos += event.data.combos[i] + "</br>";
+					}
+					document.getElementById("loading").style.display = "none";
+					e = (new Date()).valueOf();
+					document.getElementById("results").innerHTML = combos + 
+							"Sum of products: " + event.data.answer + 
+							"</br>Duration: " + (e-s);
+				}
+			};
+		</script>
+		
+		<script id="pandigital" type="javascript/worker">
+			Array.prototype.contains = function (element, options) {
+				for (var i = 0; i < this.length; i++)
+					if (this[i] == element) return true;
+				return false;
+			}
+			self.onmessage = function(event){
+				var start = event.data.start,
+					end = event.data.end,
+					answer = 0,
+					used = [],
+					combos = [],
+					pand = (function(){
+								var value = "";
+								for(i = start; i <= end; i++)
+									value += i;
+								return value;
+							}()),
+					isPandigital = function(sNum) {
+						sNum = sNum.split("");
+						sNum.sort();
+						return sNum.join("") === pand;
+					};
+				//code
+				for(var i = 2; i < 100; i++) {
+					for(var j = 0; j <= 10000; j++){
+						if(String(i).length + String(j).length + String(i*j).length === pand.length) {
+							if(isPandigital(String(i) + String(j) + String(i*j))){
+								if(!used.contains((i*j))) {
+									combos.push(i + "x" + j + "=" + (i * j));
+									used.push(i * j);
+									answer += i * j;
+								}
+							}
+						}
+					}
+				}
+				this.postMessage({"answer": answer, "combos": combos});
+			}
+			
+			
+			
+		</script>
+	</div>
+</body>
+</html>

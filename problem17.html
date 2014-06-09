@@ -1,0 +1,126 @@
+<html>
+<head>
+</head>				
+<body>
+		<h1> EXERCISE 17 : If the numbers 1 to 5 are written out in words: one, two, three, four, five, then there are 3 + 3 + 5 + 4 + 4 = 19 letters used in total.
+			</br>
+			If all the numbers from 1 to 1000 (one thousand) inclusive were written out in words, how many letters would be used?</h1>
+		<hr/>
+		<div style="display:block;max-width:500px;">
+			Start Number<input type="textbox" id="startNumber"/></br>
+			End Number<input type="textbox" id="endNumber"/></br>
+			<input type="button" onClick="NumberStringCount()" value="run"/>
+		</div>
+	</div>
+	<div style="width:49%;max-width:none;display:block;float:left;">
+		<h2>Results</h2>
+		<div id="loading" style="display:none">Finding Largest palindromic</div>
+		<div id="results" style="max-width:none;"></div>
+		<script id="loopNumbers" type="javascript/worker">
+			var numberStrings = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", 
+								"thir", "fif", "eigh", "twen", "for"],
+				endings = [" hundred ", " thousand ", " million ", " billion ", " trillion "];
+			var convertNumToString = function(value, string, array){
+					var values = array || value.toString().split("").reverse(),
+						numberString = numberStrings[parseInt(values[values.length - 1])];
+						tens = function(ending){
+							var firstValue = parseInt(values[values.length - 1], 10),
+								secondValue = parseInt(values[values.length - 2], 10),
+								fullValue = parseInt(values[values.length - 1] + values[values.length - 2], 10),
+								tens = "",
+								ones = "",
+								append = "";
+							if(fullValue === 0) return "";//zeros
+							else if(fullValue >= 20) tens = (firstValue === 0) ? "" :numberStrings[firstValue] + "ty "; //all tens numbers
+							
+							ones = ((secondValue === 0) ? "" : numberStrings[secondValue]) + ((fullValue < 20) ? "teen " : ""); //all ones numbers
+							
+							if(firstValue === 2) fullValue = numberStrings[16] + "ty " + ones;//twenty
+							else if(firstValue === 3) fullValue = numberStrings[13] + "ty " + ones;//thirty
+							else if(firstValue === 4) fullValue = numberStrings[17] + "ty " + ones;//forty
+							else if(firstValue === 5) fullValue = numberStrings[14] + "ty " + ones;//fifty
+							else if(firstValue === 8) fullValue = numberStrings[15] + "ty " + ones;//eighty
+							
+							else if(fullValue <= 12) fullValue = numberStrings[fullValue];//zero - twelve
+							else if(fullValue === 13) fullValue = numberStrings[13] + "teen ";//thirteen
+							else if(fullValue === 15) fullValue = numberStrings[14] + "teen ";//fifteen
+							else if(fullValue === 18) fullValue = numberStrings[15] + "teen ";//eighteen
+							else fullValue = tens + ones;//other double digit numbers
+							values.pop();
+							if(string !== "")
+								return "and " + fullValue + ending;
+							return fullValue + ending;
+						},
+						putValue = function(ending){
+							if(numberString !== "zero") return string + numberString + ending;
+							return string;
+						};
+						
+					string = string || "";
+					
+					if(values.length === 1) return string + numberString;//single
+					else if(values.length === 2) return string + tens("");//tens
+					else if(values.length % 3 === 0) string = putValue(endings[0]);//hundreds
+					else if(values.length === 4) string = putValue(endings[1]);//thousands
+					else if(values.length === 5) string = string + tens(endings[1]);//tens of thousands
+					else if(values.length === 7) string = putValue(endings[2]); //millions
+					else if(values.length === 8) string = string + tens(endings[2]);//tens of millions
+					else if(values.length === 10) string = putValue(endings[3]);//billion
+					else if(values.length === 11) string = string + tens(endings[3]);//tens of billions
+					else if(values.length === 13) string = putValue(endings[4]);//trillions
+					else if(values.length === 14) string = string + tens(endings[4]);//tens of trillions
+
+					values.pop();//remove the value from the list and run the method again
+					return convertNumToString(0, string, values);
+			};
+			self.onmessage = function(e) {
+				var start = new Date().getTime(),
+					values = [],
+					count = 0,
+					word = "",
+					end,
+                    i;
+				
+				for(i = e.data.start; i <= e.data.end; i++){
+					word = convertNumToString(i);
+					count = count + word.replace(/\s/g, "").split("").length;
+				}
+				end = new Date().getTime();
+				self.postMessage({
+					"start": start,
+					"end": end,
+					"duration": end - start,
+					"values": values,
+					"startNumber": e.data.start,
+					"endNumber": e.data.end,
+					"totalChars": count
+				});
+			};
+		</script>
+		<script>
+			var NumberStringCount = function(){
+				var blobLoopNumbers = new Blob([document.querySelector('#loopNumbers').innerHTML], {"type": "text/javascript"}),
+					loopNumbersURL = window.webkitURL.createObjectURL(blobLoopNumbers),
+					loopNumbersThread = new Worker(loopNumbersURL);
+				
+				loopNumbersThread.onmessage = function(e) {
+					document.getElementById("loading").style.display = "none";
+					console.log(event.data);
+					document.getElementById("results").innerHTML = "<br/>START: " + event.data.start + "ms" +
+						"<br/>FINISH: " + event.data.end + "ms" +
+						"<br/>DURATION: " + event.data.duration + "ms" +
+						"<br/>Total Characters: " + event.data.totalChars +
+						"<br/>Start Number: " + event.data.startNumber +
+						"<br/>End Number: " + event.data.endNumber;
+
+				};
+				
+				loopNumbersThread.postMessage({
+					"start": document.getElementById("startNumber").value,
+					"end": document.getElementById("endNumber").value
+				});
+			};
+		</script>
+	</div>
+</body>
+</html>

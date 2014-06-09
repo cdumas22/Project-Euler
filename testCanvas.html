@@ -1,0 +1,377 @@
+<html>
+<head>
+	<script src="common.js"></script>
+	<style type="text/css">
+		.canvas { 
+			width:300px; 
+			height: 300px; 
+			border: solid 1px;
+		}
+	</style>
+</head>
+<body>
+	<canvas id="canvas2" class="canvas"></canvas>
+	<script>
+		var $ = function(selector){
+			return document.querySelector(selector);
+		}
+	</script>
+	<script>
+		var js_snake = {};
+		//http://css-tricks.com/learn-canvas-snake-game/
+		js_snake.equalCoordinates = function (coord1, coord2) {
+			return coord1[0] === coord2[0] && coord1[1] === coord2[1];
+		};
+		js_snake.checkCoordinateInArray = function (coord, arr) {
+		  var isInArray = false;
+		  for(var i = 0; i < arr.length; i++){
+			if(js_snake.equalCoordinates(coord, arr[i])) {
+				isInArray = true;
+			}
+		  }
+		  return isInArray;
+		};
+		js_snake.game = (function(){
+			var ctx,
+				xPosition = 0,
+				yPosition = 0,
+				frameLength = 150,//this is the time that will be between each frame
+				snake,
+				apple,
+				score = 0,
+				timeout,
+				init = function(){
+					var body = document.getElementsByTagName("body")[0],
+						canvas = document.createElement("canvas");					
+					canvas.setAttribute("width", js_snake.width);
+					canvas.setAttribute("height", js_snake.height);
+					canvas.setAttribute("id", "canvas");
+					body.appendChild(canvas);
+					ctx = canvas.getContext("2d");
+					snake = js_snake.snake();
+					apple = js_snake.apple();
+					bindEvents();
+					gameLoop();
+				},
+				gameLoop = function() {
+					ctx.clearRect(0, 0, js_snake.width, js_snake.height);
+					snake.advance(apple);
+					draw();
+					if(snake.checkCollission()) {
+						snake.retreat();
+						snake.draw(ctx);
+						gameOver();
+					}
+					else {
+						timeout = setTimeout(gameLoop, frameLength); //do it all again
+					}										
+				},
+				draw = function() {
+					snake.draw(ctx);
+					drawBorder();					
+					apple.draw(ctx);
+					drawScore();
+				},
+				drawScore = function () {
+					ctx.save();
+					ctx.font = 'bold 102px sans-serif';
+					ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+					ctx.textAlign = 'center';
+					ctx.textBaseline = 'middle';
+					var centreX = js_snake.width / 2;
+					var centreY = js_snake.width / 2;
+					ctx.fillText(score.toString(), centreX, centreY);
+					ctx.restore();
+				},
+				gameOver = function () {
+					ctx.save();
+					ctx.font = 'bold 30px sans-serif';
+					ctx.fillStyle = '#000';
+					ctx.textAlign = 'center';
+					ctx.textBaseline = 'middle';
+					ctx.strokeStyle = 'white';
+					ctx.lineWidth = 2;
+					var centreX = js_snake.width / 2;
+					var centreY = js_snake.width / 2;
+					ctx.strokeText('Game Over', centreX, centreY - 10);
+					ctx.fillText('Game Over', centreX, centreY - 10);
+					ctx.font = 'bold 15px sans-serif';
+					ctx.strokeText('Press space to restart', centreX, centreY + 15);
+					ctx.fillText('Press space to restart', centreX, centreY + 15);
+					ctx.restore();
+				},
+				drawBorder= function () {
+					ctx.save();
+					ctx.strokeStyle = 'gray';
+					ctx.lineWidth = js_snake.blockSize;
+					ctx.lineCap = 'square';
+					var offset = ctx.lineWidth / 2;
+					var corners = [
+					  [offset, offset],
+					  [js_snake.width - offset, offset],
+					  [js_snake.width - offset, js_snake.height - offset],
+					  [offset, js_snake.height - offset]
+					];
+					ctx.beginPath();
+					ctx.moveTo(corners[3][0], corners[3][1]);
+					for(var i = 0; i < corners.length; i++){
+						ctx.lineTo(corners[i][0], corners[i][1]);
+					}
+					ctx.stroke();
+					ctx.restore();
+				},
+				restart = function () {
+					clearTimeout(timeout);
+					//$('body').unbind('keydown');
+					//$(js_snake).unbind('appleEaten');
+					//$(canvas).unbind('click');
+					js_snake.game.init();
+				  },
+				bindEvents = function() {
+					var keysToDirections = {
+							37: "left",
+							38: "up",
+							39: "right",
+							40: "down"
+						};
+					document.addEventListener("keydown", function(evt) {
+						var direction = keysToDirections[evt.which];
+						if(direction) {
+							snake.setDirection(direction);
+							event.preventDefault();
+						} else if (evt.which = 32) {
+							restart();
+						}
+					}, false);
+				};
+			
+			js_snake.eatApple = function(evt, snakePositions) {
+				apple.setNewPosition(snakePositions);//TODO this might not be right
+				score++;
+				frameLength *= 0.99;
+			};
+			
+			js_snake.width = 300;
+			js_snake.height = 300;
+			js_snake.blockSize = 10;
+			js_snake.widthInBlocks = js_snake.width / js_snake.blockSize;
+			js_snake.heightInBlocks = js_snake.height / js_snake.blockSize;
+			
+			return {
+				init: init
+			};
+		}());
+		js_snake.apple = function () {
+			var position = [6,6],
+				draw = function(ctx) {
+					var radius = js_snake.blockSize / 2,
+						x = position[0] * js_snake.blockSize + radius,
+						y = position[1] * js_snake.blockSize + radius;
+					ctx.save();
+					ctx.fillStyle = "0a0"; //green
+					ctx.beginPath();
+					ctx.arc(x, y, radius, 0, Math.PI * 2, true);
+					ctx.fill();
+					ctx.restore();					
+				},
+				getPosition = function(){
+					return position;
+				},
+				random = function (low, high) {
+					return Math.floor(Math.random() * (high - low + 1) + low);
+				},
+				getRandomPosition = function() {
+					var x = random(1, js_snake.widthInBlocks - 2),
+						y = random(1, js_snake.heightInBlocks - 2);
+						return [x, y];
+				},
+				setNewPosition = function (snakeArray) {
+   					var newPosition = getRandomPosition();
+    				//if new position is already covered by the snake, try again
+    				if (js_snake.checkCoordinateInArray(newPosition, snakeArray)) {
+      					return setNewPosition(snakeArray);
+    				}
+    				//otherwise set position to the new position
+    				else {
+      					position = newPosition;
+    				}
+  				};
+			return {
+				draw: draw,
+				setNewPosition: setNewPosition,
+				getPosition: getPosition
+			};			
+		};
+		js_snake.snake = function () {
+			var previousPosArray,
+				posArray = [],
+				direction = 'right',
+				nextDirection = direction,
+				drawSection = function(ctx, position) {
+					var x = js_snake.blockSize * position[0],
+						y = js_snake.blockSize * position[1];
+					ctx.fillRect(x, y, js_snake.blockSize, js_snake.blockSize);
+				},
+				draw = function(ctx) {
+					var i;
+					ctx.save();
+					ctx.fillStyle = "#33a";
+					for (i = 0; i < posArray.length; i += 1) {
+						drawSection(ctx, posArray[i]);
+					}
+					ctx.restore();
+				},
+				advance = function(apple) {
+					var nextPosition = posArray[0].slice(); //copy head of snake
+					direction = nextDirection;
+					switch (direction) {
+						case 'left':
+							nextPosition[0] -= 1;
+							break;
+						case 'up':
+							nextPosition[1] -= 1;
+							break;
+						case 'right':
+							nextPosition[0] += 1;
+							break;
+						case 'down':
+							nextPosition[1] += 1;
+							break;
+						default: 
+							throw('invalid directions');
+					}
+					previousPosArray = posArray.slice(); //save previous array
+    				posArray.unshift(nextPosition);
+					if (isEatingApple(posArray[0], apple)) {
+					    js_snake.eatApple('appleEaten', posArray);
+					}
+					else {
+					    posArray.pop();
+					}
+				},
+				getDirection = function(){
+					return direction;
+				},
+				setDirection = function(dir) {
+					var allowDirections;
+					
+					switch(direction) {
+						case 'left':
+						case 'right':
+							allowDirections = ['up', 'down'];
+							break;
+						case 'up':
+						case 'down':
+							allowDirections = ['left', 'right'];
+							break;
+						default:
+							throw("invalid direction");
+					}
+					if(allowDirections.indexOf(dir) > -1) {
+						nextDirection = dir;
+					}
+				},
+				retreat = function(){
+					posArray = previousPosArray;
+				},
+				checkCollission = function(){
+					var wallCollision = false,
+						snakeCollision = false, 
+						head = posArray[0],
+						rest = posArray.slice(1),
+						snakeX = head[0],
+						snakeY = head[1],
+						minX = 1,
+						minY = 1,
+						maxX = js_snake.widthInBlocks - 1,
+						maxY = js_snake.heightInBlocks - 1,
+						outsideHorizontalBounds = snakeX < minX || snakeX >= maxX,
+						outsideVerticalBounds = snakeY < minY || snakeY >= maxY;
+						
+					if(outsideHorizontalBounds || outsideVerticalBounds) {
+						wallCollision = true;
+					}
+					snakeCollision = js_snake.checkCoordinateInArray(head, rest);
+					return wallCollision || snakeCollision
+				},
+				isEatingApple = function(head, apple) {
+					return js_snake.equalCoordinates(head, apple.getPosition());
+				};
+			posArray.push([6,4]);
+			posArray.push([5,4]);
+			posArray.push([4,4]);
+			
+			return {
+				draw: draw,
+				advance: advance,
+				getDirection: getDirection,
+				setDirection: setDirection,
+				retreat: retreat,
+				checkCollission: checkCollission
+			};
+		};
+		
+
+		
+		
+		js_snake.game.init();
+		
+	</script>
+	
+</body>
+</html>
+
+<!--
+things to tell about jQuery
+
+
+live events
+
+$(function(){}); or $(document).ready(function(){}); ready event
+
+$(...) the selector and sizzle engine
+	alternatives querySelector
+
+.addClass("..."); .removeClass("...")	
+	
+.parent() and .parents("...") dom traversal
+.before(), .after(), .add()
+
+jQuery Plugins
+
+
+jquery animation (dont use except for fallbacks) css-animation and css-transition and css-transform
+check for plugins to jquery but you get cleaner code by doing it yourself
+$.ajax({
+	type: "POST",
+	url: "myurl.php", 
+	
+});
+$("a#upbutton").click(function(evt){
+	var id = $(this).parent().attr("id"),
+		type = "up",
+		table = $(this).attr("table");
+		console.log(id + table);
+	ajaxIncrement(table, type, id);
+	
+});
+var ajaxIncrement = function(table, type, id) {
+	$.ajax({
+		type:"POST",
+		url: "myurl.php",
+		data: {
+			id: id,
+			type: type,
+			table: table
+		},
+		success: function(result){
+			console.log(result);
+		},
+		error(a, b, c) {
+			console.log(a);
+			console.log(b);
+			console.log(c);
+		}
+	});
+};
+-->

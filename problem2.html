@@ -1,0 +1,89 @@
+<html>
+<head>
+<style>
+		span, div {
+			padding:4px;
+			border:solid 1px black;
+			margin:2px;
+			max-width:270px;
+			text-align:center;
+			min-width:36px;
+			display:inline-block;
+		}
+		.three{
+			background:lightgrey;
+		}
+		.five{
+			background:lavender;
+		}
+		.both{
+			background:khaki;
+		}
+		span:last-child {
+			color:red;
+			font-weight:bold;
+			font-size:4em;
+			clear:both;
+			width:95%;
+			background:greenyellow;
+			max-width:none;
+		}
+	</style
+</head>
+<body>
+<h1> EXERCISE 2 : By considering the terms in the Fibonacci sequence whose values do not exceed four million, find the sum of the even-valued terms</h1>
+	<div style="display:block;max-width:500px;">Sum Numbers to<input type="textbox" id="numbers"/><input type="button" onclick="runSum()" value="run"/></div>
+	<h2>numbers</h2>
+	<div id="results" style="max-width:none;"></div>
+<script>
+		//use self exexuting functions for cleanness
+		var ran = false,
+			runSum = function(type){
+				ran = true
+				var total = 0,
+					i,
+					printNum = function(num, last, cssClass){
+						var a = document.createElement("span");
+						a.className = cssClass;
+						a.innerHTML = addComma(num);
+						document.getElementById("results").appendChild(a);
+						if(!last){
+							document.getElementById("results").appendChild(document.createTextNode("+"));
+						}
+					}, 
+					addComma = function(num) {
+						var rgx = /(\d+)(\d{3})/;//regex for three numbers
+						num = num + '';//convert the number to a string
+						while (rgx.test(num)) {
+							num = num.replace(rgx, '$1' + ',' + '$2');
+						}
+						return num;
+					},
+					sumto = document.getElementById("numbers").value,
+					/**
+						Magic that finds the numbers
+					*/
+					fibonacciEvenSum = function(to){
+						var prev = 1, prevprev = 1, temp;
+						while(prev < sumto){
+							temp = prev + prevprev;
+							if((temp % 2) === 0){
+								total = total + temp;
+								printNum(temp);
+							}
+							prevprev = prev;
+							prev = temp;
+						}
+						
+					};
+					//END MAGIC
+				if(ran === true){
+					document.getElementById("results").innerHTML = "";
+				}
+				fibonacciEvenSum(sumto);
+				printNum(total, true);
+			};
+	</script>
+
+</body>
+</html>

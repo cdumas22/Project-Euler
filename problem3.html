@@ -1,0 +1,74 @@
+<html>
+<head>
+	<script src="common.js"></script>
+</head>
+<body>
+	<div>
+		<h1> EXERCISE 3 : What is the largest prime factor of the number 600851475143 ?</h1>
+		<hr/>
+		<div>
+			Get Largest Prime From <input type="textbox" id="numbers"/>
+			<input type="button" onclick="findPrimeNumbers()" value="run"/>
+		</div>
+	</div>
+	<div>
+		<h2>numbers</h2>
+		<div id="loading" style="display:none">Finding Largest Prime Factor</div>
+		<div id="results" style="max-width:none;"></div>
+		<script>
+			//use self exexuting functions for cleanness
+			var ran = false,
+				primeNumbers = [],
+				findPrimeNumbers = function(options) {
+					var blob = new Blob([document.querySelector('#primeNumbers').innerHTML], {"type": "text/javascript"}),
+						url = window.webkitURL.createObjectURL(blob),
+						worker = new Worker(url);
+					
+					var number = document.getElementById("numbers").value;
+					document.getElementById("loading").style.display = "block";
+					document.getElementById("results").innerHTML = "";
+                    worker.postMessage({"number": number});
+                    worker.onmessage = function(event){
+						document.getElementById("loading").style.display = "none";
+						document.getElementById("results").innerHTML = event.data.primeNumber;
+						console.log(event.data.primeArray);
+					}
+				};
+		</script>
+		<script id="primeNumbers" type="javascript/worker">
+			self.onmessage = function(event){
+				var iNum = event.data.number,
+					count = 0,
+					factor = 2,
+					primeFactores = [];
+				while (iNum > 1) {
+					if (iNum % factor == 0) {
+						//oFactors.push_back(factor);
+						primeFactores.push(factor);
+						++count;
+						iNum /= factor;
+						
+					} else {
+						// get to next prime number and explicitly ignore even factors
+						do {
+							++factor;
+						} while (factor % 2 == 0 || !isPrime(factor));
+					}
+				}
+				this.postMessage({"primeNumber": primeFactores[count - 1], "primeArray": primeFactores});
+			}
+			function isPrime(iNum){
+				var prime = true;
+				var i = 2;
+				var limit = Math.sqrt(iNum) + 1;
+			 
+				while (prime && (i < limit)) {
+					prime = (iNum % i != 0);
+					++i;
+				}
+				return prime;
+			}
+		</script>
+	</div>
+</body>
+</html>

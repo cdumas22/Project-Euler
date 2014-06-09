@@ -1,0 +1,62 @@
+<html>
+<head>
+	<script src="common.js"></script>
+</head>
+<body>
+	<div>
+		<h3> 
+			<p>A Pythagorean triplet is a set of three natural numbers, a < b < c, for which,</p>
+			<div style="text-align:center;"> a<sup>2</sup> + b<sup>2</sup> = c<sup>2</sup></div>
+			<p>For example, 3<sup>2</sup> + 4<sup>2</sup> = 9 + 16 = 25 = 5<sup>2</sup>.</p>
+			<p>There exists exactly one Pythagorean triplet for which a + b + c = 1000.<br>Find the product abc.</p>
+		</h3>
+		<hr/>
+		<h3></h3>
+		<div>
+			Number<input type="textbox" id="numbers"/>
+			
+			<input type="button" onclick="PythagoreanTriplet()" value="run"/>
+		</div>
+	</div>
+	<div style="">
+		<h2>Value</h2>
+		<div id="loading" style="display:none">Finding Pythagorean Triplet</div>
+		<div id="results"></div>
+	</div>
+	<script>
+		//use self exexuting functions for cleanness
+		var PythagoreanTriplet = function(){
+			var blob = new Blob([document.querySelector('#PythagoreanTriplet').innerHTML], {"type": "text/javascript"}),
+				url = window.webkitURL.createObjectURL(blob),
+				worker = new Worker(url);
+			document.getElementById("loading").style.display = "block";
+			var number = document.getElementById("numbers").value;
+			document.getElementById("results").innerHTML = "";
+			worker.postMessage({"product": number});
+			
+			worker.onmessage = function(event){
+				document.getElementById("loading").style.display = "none";
+				console.log(event.data.values);
+				document.getElementById("results").innerHTML = event.data.values;
+			}
+		};
+	</script>
+	<script id="PythagoreanTriplet" type="javascript/worker">
+		self.onmessage = function(event){
+			var value = event.data.product;
+			this.postMessage({"values": (function(){
+				for(var a = 1; a< 333; a++){
+					for(var b = a + 1; b<500; b++){
+						var c = value - a - b;						
+						if((a < b < c) && 
+						   ((a+b+c) == value) &&
+						   ((a*a + b*b) == c*c)) {
+								return [a,b,c];
+						}
+					}
+				}
+			}())});
+		}
+	</script>
+</body>
+</html>

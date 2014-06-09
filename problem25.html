@@ -1,0 +1,182 @@
+<html>
+<head>
+</head>
+<body>
+		<h1> EXERCISE 25 : What is the first term in the Fibonacci sequence to contain 1000 digits</h1>
+		<hr/>
+		<div style="display:block;max-width:500px;">
+			Digits<input type="textbox" id="numbers"/>
+			<input type="button" onclick="Fibonacci()" value="run"/>
+			<br/>
+			<input id="loop" type="radio" name="method" value="loop"/> Loop<br/>
+			<input id="recursive" type="radio" name="method" value="recursive" checked="true"/> Recursive<br/>
+			<input id="recursiveB" type="radio" name="method" value="recursiveB"/> Recursive Basic
+		</div>
+	</div>
+	<div style="width:49%;max-width:none;display:block;float:left;">
+		<h2>Results</h2>
+		<div id="loading" style="display:none">Finding Largest palindromic</div>
+		<div id="results" style="max-width:none;"></div>
+		<script>
+			var Fibonacci = function(){
+				//make the worker file
+				var blob = new Blob([document.querySelector('#fibonacci').innerHTML], {"type": "text/javascript"}),
+					url = window.webkitURL.createObjectURL(blob),
+					worker = new Worker(url);
+				//get the value to pass to the worker
+				var number = document.getElementById("numbers").value;
+				
+				//set the styles to show the loader
+				document.getElementById("loading").style.display = "block";
+				document.getElementById("results").innerHTML = "";
+				
+				//send the worker the value to run
+				if(document.getElementById("loop").checked === true) {
+					worker.postMessage({"digits": number, "loop": true});
+				} else if(document.getElementById("recursive").checked === true){
+					worker.postMessage({"digits": number, "recursiveAdv": true});
+				} else {
+					worker.postMessage({"digits": number});
+				}
+				
+				//wait for responses from the worker
+                worker.onmessage = function(event){
+					//set the styles to hide the loader
+					document.getElementById("loading").style.display = "none";
+					console.log(event.data.fibonacci);
+					//set the content to the results from the worker
+					document.getElementById("results").innerHTML = "Fibonacci Term: " + event.data.term + 
+																   "<br/>Digits in term: " + event.data.digits + 
+																   "<br/>START: " + event.data.start + "ms" +
+																   "<br/>FINISH: " + event.data.finish + "ms" +
+																   "<br/>DURATION: " + event.data.duration + "ms" +
+																   "<br/>Type: " + event.data.type +
+																   "<br/>Value: " + event.data.fibonacci.toString().replace(/,/gi,"");
+				}
+			};
+		</script>
+		<script id="fibonacci" type="javascript/worker">
+			//have the worker wait for messages to be sent to it
+			self.onmessage = function(event){
+				//this method is used for adding really large whole numbers
+				// it accepts two arrays that represents a number AKA: 1 = [1]  33 = [3,3]
+				var sumArray = function(array1, array2) {
+					var i,
+						newArray = [],
+						addValue = 0,
+						tens = 0,
+						//adds zeros to the front of an array
+						addZero = function(array, diff){
+							var i;
+							for(i = 0; i < diff; i += 1) {
+								array.unshift(0);
+							}
+							return array;
+						};
+					//makes sure the two arrays have the same number of values
+					//if they dont than it adds zeros to the number
+					if(array1.length > array2.length) {
+						array2 = addZero(array2, (array1.length - array2.length));
+					} else if (array1.length < array2.length) {
+						array1 = addZero(array1, (array2.length - array1.length));
+					}
+					//creates a new array that contains the added values from the two arrays
+					for(i = array1.length - 1; i >= 0; i = i - 1){
+						addValue = tens + array1[i] + array2[i];
+						if(addValue > 9){
+							addValue = addValue - 10;
+							tens = 1;
+						} else {
+							tens = 0;
+						}
+						newArray.unshift(addValue);
+					}
+					//take care of an extra tens digit that was carried from the last place in the addition
+					if(tens > 0) {
+						newArray.unshift(tens);
+					}
+					return newArray;
+				}, 
+				//Tail Recursion so that the stack on javascript doesn't over flow as fast as it normally does
+				fibonacciAdvRecursive = function(count, a1, a2) {
+					var temp;
+					if(a2.length !== count) {
+						temp = sumArray(a1, a2);
+						a1 = a2;
+						a2 = temp;
+						i = i + 1;
+						fibonacciAdvRecursive(count, a1, a2);
+					} else {
+						sendResponse(a2, count, i + 1);
+					}
+				},
+				fibonacciBasicRecursive = function(digits, num, prev) {
+					if(typeof num !== 'number') {
+						num = 1;
+					}
+					if(typeof prev !== 'number') {
+						prev = 0;
+					}
+					1000
+					if((num + '').length >= digits){
+						return num;
+					} else {
+						return fibonacciBasicRecursive(digits, num + prev, num); 
+					}
+				},
+				//Looping method of fibonacci wont die but isnt as cool as recursive
+				fibonacciLoop = function(count, a1, a2) {
+					var temp
+					while(true){
+						temp = sumArray(a1, a2);
+						a1 = a2;
+						a2 = temp;
+						i = i + 1;
+						if(a2.length === count){
+							sendResponse(a2, count, i + 1);
+							break;
+						}
+					}
+				},
+				fibonacciCalculation = function(count, a1, a2) {
+					 //this still needs a lot of work but should work if done right. FASTEST WAY TO FIND SOLUTION
+					// var calc = (1 / Math.log(5)) * (Math.pow((1 + Math.log(5)) / 2, count) - (1/Math.log(5))* Math.pow(((1-Math.log(5))/2), count);
+
+				},
+				sendResponse = function(array, count, term) {
+					finish = new Date().getTime();
+							this.postMessage({
+								"fibonacci": array, 
+								"digits": count, 
+								"term": term, 
+								"start": start, 
+								"finish": finish, 
+								"duration": finish - start,
+								"type": type
+							});
+				},
+				//start out the fibonacci sequence with the first values
+				arraya = [0],
+				arrayb = [1],
+				//set the counter to zero
+				i = 0,
+				start = new Date().getTime(),
+				finish,
+				type;
+				
+				//call the fibonacci method
+				if(event.data.loop){
+					type = "loop";
+					fibonacciLoop(parseInt(event.data.digits), arraya, arrayb);
+				} else if(event.data.recursiveAdv){
+					type = "Advanced Recursive";
+					fibonacciAdvRecursive(parseInt(event.data.digits), arraya, arrayb);
+				} else {
+					type = "Basic Recursive";
+					sendResponse(fibonacciBasicRecursive(parseInt(event.data.digits)));
+				}
+			}
+		</script>
+	</div>
+</body>
+</html>

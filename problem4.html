@@ -1,0 +1,80 @@
+<html>
+<head>
+	<script src="common.js"></script>
+</head>
+<body>
+	<div>
+		<h1> EXERCISE 4 : Find the largest palindrome made from the product of two 3-digit numbers</h1>
+		<hr/>
+		<div style="display:block;max-width:500px;">
+			Digits<input type="textbox" id="numbers"/><input type="button" onclick="Palindromic()" value="run"/>
+		</div>
+	</div>
+	<div>
+		<h2>numbers</h2>
+		<div id="loading" style="display:none">Finding Largest palindromic</div>
+		<div id="results" style="max-width:none;"></div>
+		<script>
+			//use self exexuting functions for cleanness
+			var Palindromic = function(){
+				var blob = new Blob([document.querySelector('#palindromic').innerHTML], {"type": "text/javascript"}),
+					url = window.webkitURL.createObjectURL(blob),
+					worker = new Worker(url);
+
+				var number = document.getElementById("numbers").value;
+				document.getElementById("loading").style.display = "block";
+				document.getElementById("results").innerHTML = "";
+                worker.postMessage({"digits": number});
+                worker.onmessage = function(event){
+					document.getElementById("loading").style.display = "none";
+					document.getElementById("results").innerHTML = event.data.palindromic;
+				}
+			};
+		</script>
+		<script id="palindromic" type="javascript/worker">
+			self.onmessage = function(event){
+				var digits = event.data.digits, 
+					i,j,k, number = "",palindromic = [],
+					bool = true,max,min = 9,array,ar,start = "0";
+				if(digits > 3) start = "4";
+				if(digits > 5) start = "6";
+				if(digits > 6) start = "7";
+				if(digits > 7) start = "8";
+				for(i = 0; i < digits - 1; i++) {
+					min += start;
+				}
+				for(i = 0; i < digits; i++){
+					number += "9";
+				}
+				max = (number * number).toString().split("").length;
+				for(i = number; i > min; i--){
+					if(i < min){
+						break;
+					}
+					for(j = number; j > min; j--){
+						array = j * i;
+						ar = array.toString().split("");
+						if(ar.length !== max){
+							break;
+						}
+						for(k = 0; k < ar.length; k++) {
+							if(ar[k] !== ar[ar.length - (k + 1)]){
+								bool = false;
+								break;
+							}
+							else{
+								bool = true;
+							}
+						}
+						if(bool){
+							palindromic.push(array);
+						}
+					}
+				}
+				palindromic.sort();
+				this.postMessage({"palindromic": palindromic[palindromic.length -1]});
+			}
+		</script>
+	</div>
+</body>
+</html>

@@ -1,0 +1,12 @@
+{
+  "name": "Project Euler",
+  "version": "1.0.1",
+  "author": "Cameron Dumas",
+  "private": true,
+  "scripts": {
+    "start": "node APP.js"
+  },
+  "dependencies": {
+    "connect": "~2.12.0"
+  }
+}

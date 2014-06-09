@@ -1,0 +1,87 @@
+<html>
+<head>
+	
+	
+</head>
+<body>
+	
+	<script id="worker" type="javascript/worker">
+		self.addEventListener('message', function (event) {
+		  var message = event.data;
+		  
+		  
+		  //  IF BOOLEAN
+		  if ( typeof message === 'boolean' ) {
+			message = 'boolean: ' + message.toString();
+		  }
+		  //  ALL OTHER MESSAGE TYPES
+		  else {
+		  
+			//  IF STRING OR ARRAY
+			if ( message.length ) {
+			  //  IF STRING
+			  if ( typeof message == 'string' ) {
+				message += ', Hello Renderer Process';
+			  }
+			  else {
+				var len     = message.length + 1, 
+					floor   = len, 
+					ceil    = floor * 2;
+				
+				
+				for ( ; floor < ceil; floor++ ) {
+				  message.push(floor);
+				}
+			  }
+			}
+			//  IF OBJECT
+			else {
+			  message['worker-process'] = 'Hello Renderer Process';
+			}
+		  }  
+		  
+		  this.postMessage(message);
+
+
+		}, false);
+	</script>
+	<script>
+		var blob = new Blob([document.querySelector('#worker').innerHTML], {"type": "text/javascript"}),
+					url = window.webkitURL.createObjectURL(blob),
+					worker = new Worker(url);
+		  worker.addEventListener('message', function (event) {
+		  var message = event.data;
+		  console.group('Message Received');
+		  console.log( message );
+		  console.groupEnd();
+		}, false);
+		//  TEST VALID JSON ARG
+		worker.postMessage({
+		  'renderer-process': 'Hello Worker Process'
+		});
+		//  TEST OBJECT ARG
+		worker.postMessage({
+		  rendererProcess: 'Hello Worker Process', 
+		  resultOf: (function () {
+			return 'the result';
+		  })()
+		});
+		//  TEST ANOTHER THREAD SAFE OBJECT ARG
+		var obj = new Object();
+		obj.isArray         = [ 1,2,3,4,5 ];
+		obj.isString        = 'Foo bar baz',
+		obj.resultOf        = (function () {
+								return 'returned from self executing function';
+							  })();
+		worker.postMessage(obj);
+		//  TEST STRING ARG
+		worker.postMessage('Hello Worker Process');
+		//  TEST ARRAY ARG
+		worker.postMessage([ 1, 2, 3, 4 ]);
+		//  TEST BOOLEAN ARG
+		worker.postMessage(false);
+		//  TEST BOOLEAN ARG
+		worker.postMessage(true);
+	</script>
+</body>
+</html>
